@@ -34,32 +34,6 @@
         automation_controller_pod_names: "{{ item.metadata.name }}"
       with_items: "{{ automation_controller_pods.resources }}"
 
-    - name: Get Automation Controller instance IDs
-      awx.awx.instance:
-        controller_host: "{{ lookup('env', 'CONTROLLER_HOST') }}"
-        controller_username: "{{ lookup('env', 'CONTROLLER_USERNAME') }}"
-        controller_password: "{{ lookup('env', 'CONTROLLER_PASSWORD') }}"
-        validate_certs: false
-        hostname: "{{ automation_controller_pod_names }}"
-        enabled: true
-      register: controller_instance_ids
-
-    - name: Debug controller_instance_ids
-      ansible.builtin.debug:
-        var: controller_instance_ids
-
-    # NOTE: removed in favor of using awx module, keeping this here for sentimental value
-    # - name: Get Automation Controller instance IDs
-    #   ansible.builtin.uri:
-    #     url: "{{ lookup('env', 'CONTROLLER_HOST') }}/api/v2/instances/?hostname={{ item }}"
-    #     method: GET
-    #     user: "{{ lookup('env', 'CONTROLLER_USERNAME') }}"
-    #     password: "{{ lookup('env', 'CONTROLLER_PASSWORD') }}"
-    #     force_basic_auth: true
-    #     validate_certs: false
-    #   with_items: "{{ automation_controller_pod_names }}"
-    #   register: controller_instance_ids
-
     - name: Disable Automation Controller instance(s)
       awx.awx.instance:
         controller_host: "{{ lookup('env', 'CONTROLLER_HOST') }}"
@@ -70,19 +44,6 @@
         enabled: false
       with_items:
         - "{{ automation_controller_pod_names }}"
-
-    # NOTE: removed in favor of using awx module, keeping this here for sentimental value
-    # - name: Disable Automation Controller instance(s)
-    #   ansible.builtin.uri:
-    #     url: "{{ lookup('env', 'CONTROLLER_HOST') }}/api/v2/instances/{{ item.json.results[0].id }}/"
-    #     method: PATCH
-    #     user: "{{ lookup('env', 'CONTROLLER_USERNAME') }}"
-    #     password: "{{ lookup('env', 'CONTROLLER_PASSWORD') }}"
-    #     force_basic_auth: true
-    #     body: {'enabled': false }
-    #     body_format: json
-    #     validate_certs: false
-    #   with_items: "{{ controller_instance_ids.results }}"
 
     # NOTE: can't get the until to work for some reason so we gonna use the url module instead
     # - name: Waiting for ALL Controller Instance that have been disabled to finish jobs
@@ -111,8 +72,8 @@
       with_items: "{{ automation_controller_pod_names }}"
       register: controller_instance_jobs
       until: controller_instance_jobs.json.count == 0
-      delay: 60
-      retries: 60
+      delay: "{{ delay }}"
+      retries: "{{ retries }}"
 
     - name: Wait for all automation-job to complete
       kubernetes.core.k8s_info:
@@ -123,5 +84,5 @@
           - "spec.nodeName={{ kube_worker_node }}"
       register: automation_controller_job_pods
       until: automation_controller_job_pods.resources | length == 0
-      delay: 60
-      retries: 60
+      delay: "{{ delay }}"
+      retries: "{{ retries }}"
