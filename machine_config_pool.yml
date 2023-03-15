@@ -1,0 +1,77 @@
+- hosts: localhost
+  name: Configure MachineConfigPool for all nodes
+  collections:
+    - kubernetes.core
+  tasks:
+    - name: Get all worker nodes
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Node
+        label_selectors:
+          - node-role.kubernetes.io/worker
+      register: worker_nodes
+    - name: Create MachineConfigPool for each worker node and pause upgrade
+      kubernetes.core.k8s:
+        api_version: machineconfiguration.openshift.io/v1
+        kind: MachineConfigPool
+        name: "{{ item.metadata.name }}"
+        namespace: openshift-machine-api
+        state: present
+        definition:
+          metadata:
+            name: "{{ item.metadata.name }}"
+          spec:
+            machineConfigSelector:
+              matchLabels:
+                machineconfiguration.openshift.io/role: worker
+            nodeSelector:
+              matchLabels:
+                kubernetes.io/hostname: "{{ item.metadata.name }}"
+            paused: true
+        apply: true
+      loop: "{{ worker_nodes.resources }}"
+      loop_control:
+        label: "{{ item.metadata.name }}"
+    - name: Get ClusterVersion
+      kubernetes.core.k8s_info:
+        api_version: config.openshift.io/v1
+        kind: ClusterVersion
+        name: version
+        namespace: openshift-cluster-version
+      register: cluster_version
+    - name: Set available_upgrades
+      ansible.builtin.set_fact:
+        available_upgrades: "{{ cluster_version.resources[0].status.availableUpdates }}"
+    - name: Find image for desire version from available_upgrades
+      ansible.builtin.set_fact:
+        image: "{{ available_upgrades | selectattr('version', 'equalto', desire_version) | map(attribute='image') | list | first }}"
+      when: desire_version is defined
+    - name: Patch ClusterVersion to initiate the upgrade to desireVersion
+      kubernetes.core.k8s:
+        api_version: config.openshift.io/v1
+        kind: ClusterVersion
+        name: version
+        state: present
+        definition:
+          metadata:
+            name: version
+          spec:
+            channel: "{{ cluster_version.resources[0].spec.channel }}"
+            clusterID: "{{ cluster_version.resources[0].spec.clusterID }}"
+            desireUpdate:
+              version: "{{ desire_version }}"
+              force: false
+              image: "{{ image }}"
+        apply: true
+      when: desire_version is defined
+    - name: Wait for the upgrade to complete
+      kubernetes.core.k8s_info:
+        api_version: config.openshift.io/v1
+        kind: ClusterVersion
+        name: version
+        namespace: openshift-cluster-version
+      register: cluster_version
+      until: cluster_version.resources[0].status.history[0].state == 'Completed'
+      retries: 240
+      delay: 30
+      when: desire_version is defined
