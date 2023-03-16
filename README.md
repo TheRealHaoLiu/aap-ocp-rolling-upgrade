@@ -18,14 +18,23 @@ Note: Please verify that your kubeconfig is pointing to the correct cluster!
 
 ## Prepare the OCP cluster
 
-1. Create a MachineConfigPool for all of the worker nodes
+1. Create a MachineConfigPool 
 2. Pause the MachineConfigPool
-3. Upgrade your OCP cluster to the desired version (since the MachineConfigPool for worker are paused, the upgrade will not affect the Master nodes)
+3. Upgrade your OCP cluster to the desired version (since the MachineConfigPool for worker are paused, the upgrade will only affect the Master nodes)
+
+## Alternative steps
+
+There is a provided playbook which does the following:
+
+1. run machine_config_pool.yml
+2. wait for master node(s) to finish upgrading
+3. continue with next steps
 
 ## Run the playbook
 
 ```bash
-ansible-playbook upgrade -e kube_worker_node=<node_name> -e automation_controller_namespace=<namespace>
+ansible-playbook machine_config_pool.yml -e desire_version=<OCPVERSION>
+ansible-playbook upgrade.yml -e kube_worker_node=<node_name> -e automation_controller_namespace=<namespace>
 ```
 
 The playbook will do the following:
