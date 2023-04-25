@@ -1,0 +1,9 @@
+- name: Count and Sleep Loop
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: debug and sleep for configured time
+      include_tasks: count_and_sleep_task.yml
+      vars:
+        count: "{{ item }}"
+      loop: "{{ range(0, num_messages | int) | list }}"

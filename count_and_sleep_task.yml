@@ -1,0 +1,6 @@
+- name: Count
+  ansible.builtin.debug:
+    msg: "{{ count | default(0) }}"
+- name: Pause
+  ansible.builtin.pause:
+    seconds: "{{ sleep_interval | default(1) | int }}"
