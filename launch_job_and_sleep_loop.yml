@@ -1,6 +1,12 @@
 - name: Launch job on awx at fix interval
   hosts: localhost
   gather_facts: false
+  vars:
+    job_launch_batch_size: 2
+    job_launch_batch_count: 100
+    job_launch_sleep_interval: 100
+    num_messages: 50
+    count_sleep_interval: 2
   tasks:
     - name: Create project
       awx.awx.project:
@@ -22,4 +28,4 @@
       register: job_template
     - name: Launch jobs and sleep
       include_tasks: launch_job_and_sleep_task.yml
-      loop: "{{ range(0, job_count | int) | list }}"
+      loop: "{{ range(0, job_launch_batch_count | int) | list }}"

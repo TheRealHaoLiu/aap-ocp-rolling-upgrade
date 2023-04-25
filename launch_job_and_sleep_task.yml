@@ -2,6 +2,7 @@
 - name: Launch job in AWX
   awx.awx.job_launch:
     job_template: "{{ job_template.id }}"
+  loop: "{{ range(0, job_launch_batch_size | int) | list }}"
 
 - name: Sleep for the specified interval
   ansible.builtin.pause:
