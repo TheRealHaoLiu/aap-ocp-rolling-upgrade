@@ -1,0 +1,25 @@
+- name: Launch job on awx at fix interval
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create project
+      awx.awx.project:
+        name: "aap-ocp-rolling-upgrade"
+        scm_type: "git"
+        scm_url: "https://github.com/TheRealHaoLiu/aap-ocp-rolling-upgrade"
+        scm_branch: "aap-2.4"
+        state: "present"
+    - name: Create job template
+      awx.awx.job_template:
+        name: "count and sleep"
+        allow_simultaneous: true
+        playbook: "count_and_sleep_loop.yml"
+        project: "aap-ocp-rolling-upgrade"
+        state: "present"
+        extra_vars:
+          count_sleep_interval: "{{ count_sleep_interval }}"
+          num_messages: "{{ num_messages }}"
+      register: job_template
+    - name: Launch jobs and sleep
+      include_tasks: launch_job_and_sleep_task.yml
+      loop: "{{ range(0, job_count | int) | list }}"

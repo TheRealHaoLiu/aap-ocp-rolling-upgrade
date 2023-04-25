@@ -3,4 +3,4 @@
     msg: "{{ count | default(0) }}"
 - name: Pause
   ansible.builtin.pause:
-    seconds: "{{ sleep_interval | default(1) | int }}"
+    seconds: "{{ count_sleep_interval | default(1) | int }}"

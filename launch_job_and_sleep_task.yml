@@ -1,0 +1,8 @@
+---
+- name: Launch job in AWX
+  awx.awx.job_launch:
+    job_template: "{{ job_template.id }}"
+
+- name: Sleep for the specified interval
+  ansible.builtin.pause:
+    seconds: "{{ job_launch_sleep_interval }}"

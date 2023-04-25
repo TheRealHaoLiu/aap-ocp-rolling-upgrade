@@ -57,7 +57,7 @@ items:
     projects_persistence: false
     projects_storage_access_mode: ReadWriteMany
     projects_storage_size: 8Gi
-    replicas: 3
+    replicas: 2
     route_tls_termination_mechanism: Edge
     set_self_labels: true
     task_privileged: false
