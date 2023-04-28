@@ -1,0 +1,37 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: awx-jobs
+spec:
+  maxUnavailable: 0
+  selector:
+    matchExpressions:
+      - key: ansible-awx-job-id
+        operator: Exists
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: awx-web-pods
+spec:
+  minAvailable: 1
+  selector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - awx-web
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: awx-task-pods
+spec:
+  minAvailable: 1
+  selector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - awx-task

@@ -22,6 +22,7 @@
         playbook: "count_and_sleep_loop.yml"
         project: "aap-ocp-rolling-upgrade"
         state: "present"
+        inventory: "Demo Inventory"
         extra_vars:
           count_sleep_interval: "{{ count_sleep_interval }}"
           num_messages: "{{ num_messages }}"
