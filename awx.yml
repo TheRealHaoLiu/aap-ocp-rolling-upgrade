@@ -6,12 +6,9 @@ metadata:
     app.kubernetes.io/managed-by: awx-operator
     app.kubernetes.io/operator-version: ""
     app.kubernetes.io/part-of: awx
-    something: yoloswag
   name: awx
   namespace: awx
 spec:
-  additional_labels:
-  - something
   admin_email: admin@localhost
   admin_user: admin
   auto_upgrade: true
@@ -34,6 +31,8 @@ spec:
   replicas: 3
   route_tls_termination_mechanism: Edge
   set_self_labels: true
+  task_privileged: false
+  termination_grace_period_seconds: 300
   task_affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -46,8 +45,6 @@ spec:
               - awx-task
           topologyKey: topology.kubernetes.io/zone
         weight: 100
-  task_privileged: false
-  termination_grace_period_seconds: 300
   web_affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -60,3 +57,6 @@ spec:
               - awx-web
           topologyKey: topology.kubernetes.io/zone
         weight: 100
+    ee_extra_env: |
+      - name: RECEPTOR_KUBE_SUPPORT_RECONNECT
+        value: enabled
